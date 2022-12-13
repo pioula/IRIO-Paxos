@@ -8,12 +8,12 @@ db = connect()
 
 class UpdateBalance(BaseModel):
   id: str
-  amount: float = Field(ge=0)
+  amount: int = Field(ge=0)
 
 class Transfer(BaseModel):
   from_id: str
   to_id: str
-  amount: float = Field(ge=0)
+  amount: int = Field(ge=0)
 
 def get_account_with_id(cur, id: str):
   account = read_query(cur, "SELECT * FROM accounts WHERE id = \'{}\';".format(id))
