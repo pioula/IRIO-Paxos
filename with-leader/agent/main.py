@@ -1,7 +1,9 @@
+import uuid
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+
 from database import *
-import uuid
 
 app = FastAPI()
 db = connect()
@@ -30,11 +32,11 @@ def set_funds(cur, account):
     .format(account["balance"], account["id"]))
 
 @app.get("/health")
-async def healthcheck():
+def healthcheck():
   return {"healthy": "true"}
 
 @app.post("/open")
-async def open_bank_account():
+def open_bank_account():
   id = uuid.uuid4()
   with db.cursor() as cur:
     write_query(cur, "INSERT INTO accounts(id, balance) VALUES (\'{}\', 0);".format(id))
@@ -42,7 +44,7 @@ async def open_bank_account():
   return {"id": id, "balance": 0}
 
 @app.put("/deposit")
-async def deposit_funds(body: UpdateBalance):
+def deposit_funds(body: UpdateBalance):
   with db.cursor() as cur:
     account = get_account_with_id(cur, body.id)
     account["balance"] += body.amount
@@ -51,7 +53,7 @@ async def deposit_funds(body: UpdateBalance):
   return account
 
 @app.put("/withdraw") 
-async def withdraw_funds(body: UpdateBalance):
+def withdraw_funds(body: UpdateBalance):
   with db.cursor() as cur:
     account = get_account_with_id(cur, body.id)
     account["balance"] -= body.amount
@@ -60,7 +62,7 @@ async def withdraw_funds(body: UpdateBalance):
   return account
 
 @app.put("/transfer")
-async def transfer_funds(body: Transfer):
+def transfer_funds(body: Transfer):
   with db.cursor() as cur:
     account_from = get_account_with_id(cur, body.from_id)
     account_to = get_account_with_id(cur, body.to_id)
@@ -71,3 +73,6 @@ async def transfer_funds(body: Transfer):
     set_funds(cur, account_to)
     db.commit()
   return {"account_from": account_from, "account_to": account_to}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
