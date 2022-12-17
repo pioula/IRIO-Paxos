@@ -1,0 +1,56 @@
+version: "3.9"
+services:
+  database:
+    build: ./database
+    ports:
+      - 5433:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  node1:
+    environment:
+      NODE_ID: '1'
+    build: ./node
+    ports:
+      - 8001:80
+    depends_on:
+      database:
+        condition: service_healthy
+  node2:
+    environment:
+      NODE_ID: '2'
+    build: ./node
+    ports:
+      - 8002:80
+    depends_on:
+      database:
+        condition: service_healthy
+  node3:
+    environment:
+      NODE_ID: '3'
+    build: ./node
+    ports:
+      - 8003:80
+    depends_on:
+      database:
+        condition: service_healthy
+  node4:
+    environment:
+      NODE_ID: '4'
+    build: ./node
+    ports:
+      - 8004:80
+    depends_on:
+      database:
+        condition: service_healthy
+  node5:
+    environment:
+      NODE_ID: '5'
+    build: ./node
+    ports:
+      - 8005:80
+    depends_on:
+      database:
+        condition: service_healthy
