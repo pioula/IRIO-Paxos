@@ -1,5 +1,7 @@
 import psycopg2
-from config import config
+import os
+
+from app.config import config
 
 def connect():
     """ Connect to the PostgreSQL database server """
@@ -7,6 +9,9 @@ def connect():
         # read connection parameters
         params = config()
 
+        if "NODE_ID" in os.environ:
+          params["database"] += os.environ["NODE_ID"]
+        
         # connect to the PostgreSQL server
         print('Connecting to the PostgreSQL database...')
         return psycopg2.connect(**params)

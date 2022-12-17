@@ -1,9 +1,8 @@
 import uuid
-import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from database import *
+from app.database import *
 
 app = FastAPI()
 db = connect()
@@ -73,6 +72,3 @@ def transfer_funds(body: Transfer):
     set_funds(cur, account_to)
     db.commit()
   return {"account_from": account_from, "account_to": account_to}
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
