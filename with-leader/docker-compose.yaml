@@ -12,7 +12,7 @@ services:
   node1:
     environment:
       NODE_ID: '1'
-    build: .
+    build: ./node
     ports:
       - 8001:80
     depends_on:
@@ -21,7 +21,7 @@ services:
   node2:
     environment:
       NODE_ID: '2'
-    build: .
+    build: ./node
     ports:
       - 8002:80
     depends_on:
@@ -30,7 +30,7 @@ services:
   node3:
     environment:
       NODE_ID: '3'
-    build: .
+    build: ./node
     ports:
       - 8003:80
     depends_on:
@@ -39,7 +39,7 @@ services:
   node4:
     environment:
       NODE_ID: '4'
-    build: .
+    build: ./node
     ports:
       - 8004:80
     depends_on:
@@ -48,7 +48,7 @@ services:
   node5:
     environment:
       NODE_ID: '5'
-    build: .
+    build: ./node
     ports:
       - 8005:80
     depends_on:
