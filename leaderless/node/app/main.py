@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from app.database import *
 
 from leaderless.node.app.acceptor import Acceptor
+from leaderless.node.app.database import connect, read_query, write_query
 
 app = FastAPI()
 db = connect()
@@ -24,7 +25,7 @@ class PrepareMessage(BaseModel):
 
 class AcceptMessage(BaseModel):
   propose_id: int
-  val: str
+  val: dict
 
 def get_account_with_id(cur, id: str):
   account = read_query(cur, "SELECT * FROM accounts WHERE id = \'{}\';".format(id))
@@ -86,9 +87,16 @@ def transfer_funds(body: Transfer):
 @app.put("acceptor_prepare")
 def acceptor_prepare(body: PrepareMessage):
   res = acceptor.handle_prepare(body.propose_id)
+  acceptor.serialize()
   if res:
     return {"accepted_id": res[0], "accepted_val": res[1]}
 
 @app.put("acceptor_accept")
 def acceptor_accept(body: AcceptMessage):
-    return {"accepted": acceptor.handle_accept(body.propose_id, body.val)}
+    res = acceptor.handle_accept(body.propose_id, body.val)
+    acceptor.serialize()
+    return {"accepted": res}
+
+def on_recovery():
+    global acceptor
+    acceptor = Acceptor.deserialize()

@@ -1,3 +1,7 @@
+import pickle
+
+FILE_NAME = "acceptor.pickle"
+
 class Acceptor:
     def __init__(self):
         self.promised_id = -1
@@ -17,3 +21,12 @@ class Acceptor:
             self.accepted_val = val
             return True
         return False
+
+    def serialize(self):
+        with open(FILE_NAME, "wb") as outfile:
+            pickle.dump(self, outfile)
+
+    @staticmethod
+    def deserialize():
+        with open(FILE_NAME, "rb") as infile:
+            return pickle.load(infile)
