@@ -2,11 +2,24 @@ import pickle
 
 FILE_NAME = "acceptor.pickle"
 
+
 class Acceptor:
     def __init__(self):
-        self.promised_id = -1
-        self.accepted_id = None
-        self.accepted_val = None
+        """
+        Instantiates an Acceptor object from the on-disk file iff there is one available.
+        """
+        try:
+            with open(FILE_NAME, "rb") as infile:
+                on_disk_acceptor = pickle.load(infile)
+
+                self.promised_id = on_disk_acceptor.promised_id
+                self.accepted_id = on_disk_acceptor.accepted_id
+                self.accepted_val = on_disk_acceptor.accepted_val
+
+        except FileNotFoundError:
+            self.promised_id = -1
+            self.accepted_id = None
+            self.accepted_val = None
 
     def handle_prepare(self, propose_id):
         if self.promised_id >= propose_id:
@@ -25,8 +38,3 @@ class Acceptor:
     def serialize(self):
         with open(FILE_NAME, "wb") as outfile:
             pickle.dump(self, outfile)
-
-    @staticmethod
-    def deserialize():
-        with open(FILE_NAME, "rb") as infile:
-            return pickle.load(infile)
