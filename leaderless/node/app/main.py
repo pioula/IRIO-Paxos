@@ -22,10 +22,12 @@ class Transfer(BaseModel):
 
 
 class PrepareMessage(BaseModel):
+    run_id: int
     propose_id: int
 
 
 class AcceptMessage(BaseModel):
+    run_id: int
     propose_id: int
     val: dict
 
@@ -96,7 +98,7 @@ def transfer_funds(body: Transfer):
 
 @app.put("acceptor_prepare")
 def acceptor_prepare(body: PrepareMessage):
-    res = acceptor.handle_prepare(body.propose_id)
+    res = acceptor.handle_prepare(body.run_id, body.propose_id)
     acceptor.serialize()
     if res[0]:
         # Prepare operation succeeded!
@@ -107,6 +109,6 @@ def acceptor_prepare(body: PrepareMessage):
 
 @app.put("acceptor_accept")
 def acceptor_accept(body: AcceptMessage):
-    res = acceptor.handle_accept(body.propose_id, body.val)
+    res = acceptor.handle_accept(body.run_id, body.propose_id, body.val)
     acceptor.serialize()
     return {"accepted": res}

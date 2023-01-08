@@ -1,4 +1,5 @@
 import pickle
+from collections import defaultdict
 
 FILE_NAME = "acceptor.pickle"
 
@@ -11,26 +12,25 @@ class Acceptor:
         try:
             with open(FILE_NAME, "rb") as infile:
                 on_disk_acceptor = pickle.load(infile)
-
-                self.promised_id = on_disk_acceptor.promised_id
-                self.accepted_id = on_disk_acceptor.accepted_id
-                self.accepted_val = on_disk_acceptor.accepted_val
+                self.parameters = on_disk_acceptor.parameters
 
         except FileNotFoundError:
-            self.promised_id = -1
-            self.accepted_id = None
-            self.accepted_val = None
+            self.parameters = defaultdict(lambda: {"promised_id": -1, "accepted_id": None, "accepted_val": None})
 
-    def handle_prepare(self, propose_id):
-        if self.promised_id < propose_id:
-            self.promised_id = propose_id
-            return self.accepted_id, self.accepted_val
-        return None, self.promised_id
+    def handle_prepare(self, run_id, propose_id):
+        run_parameters = self.parameters[run_id]
 
-    def handle_accept(self, propose_id, val):
-        if self.promised_id <= propose_id:
-            self.accepted_id = propose_id
-            self.accepted_val = val
+        if run_parameters["promised_id"] < propose_id:
+            run_parameters["promised_id"] = propose_id
+            return run_parameters["accepted_id"], run_parameters["accepted_val"]
+        return None, run_parameters["promised_id"]
+
+    def handle_accept(self, run_id, propose_id, val):
+        run_parameters = self.parameters[run_id]
+
+        if run_parameters["promised_id"] <= propose_id:
+            run_parameters["accepted_id"] = propose_id
+            run_parameters["accepted_val"] = val
             return True
         return False
 
