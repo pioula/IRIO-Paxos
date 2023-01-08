@@ -98,8 +98,11 @@ def transfer_funds(body: Transfer):
 def acceptor_prepare(body: PrepareMessage):
     res = acceptor.handle_prepare(body.propose_id)
     acceptor.serialize()
-    if res:
+    if res[0]:
+        # Prepare operation succeeded!
         return {"accepted_id": res[0], "accepted_val": res[1]}
+    # Prepare operation did not succeed, send NACK response.
+    return {"promised_id": res[1]}
 
 
 @app.put("acceptor_accept")
