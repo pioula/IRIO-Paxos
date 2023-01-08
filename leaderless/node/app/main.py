@@ -3,9 +3,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from app.database import *
-
-from leaderless.node.app.acceptor import Acceptor
-from leaderless.node.app.database import connect, read_query, write_query
+from app.acceptor import Acceptor
 
 app = FastAPI()
 db = connect()
