@@ -28,7 +28,7 @@ class Acceptor:
         return None
 
     def handle_accept(self, propose_id, val):
-        if propose_id >= self.promised_id:
+        if self.promised_id <= propose_id:
             self.promised_id = propose_id
             self.accepted_id = propose_id
             self.accepted_val = val
