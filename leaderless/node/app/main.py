@@ -1,4 +1,7 @@
-import uuid
+import os
+from enum import Enum
+from typing import Union
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
@@ -8,6 +11,7 @@ from app.acceptor import Acceptor
 app = FastAPI()
 db = connect()
 acceptor = Acceptor()
+NODE_ID = os.environ["NODE_ID"]
 
 
 class UpdateBalance(BaseModel):
@@ -21,6 +25,24 @@ class Transfer(BaseModel):
     amount: int = Field(ge=0)
 
 
+class BankOpType(Enum):
+    OPEN_ACCOUNT = 1
+    DEPOSIT = 2
+    WITHDRAW = 3
+    TRANSFER = 4
+
+
+class BankOperation(BaseModel):
+    node_id: int = NODE_ID
+    op_type: BankOpType = None
+    args: Union[None, UpdateBalance, Transfer] = None
+
+    def __init__(self, op_type: BankOpType, args: Union[None, UpdateBalance, Transfer]) -> None:
+        super().__init__()
+        self.op_type = op_type
+        self.args = args
+
+
 class PrepareMessage(BaseModel):
     run_id: int
     propose_id: int
@@ -29,7 +51,7 @@ class PrepareMessage(BaseModel):
 class AcceptMessage(BaseModel):
     run_id: int
     propose_id: int
-    val: dict
+    val: BankOperation
 
 
 def get_account_with_id(cur, id: str):
@@ -53,16 +75,13 @@ def healthcheck():
     return {"healthy": "true"}
 
 
-@app.post("/open")
-def open_bank_account():
-    id = uuid.uuid4()
+def open_bank_account(id: int):
     with db.cursor() as cur:
         write_query(cur, "INSERT INTO accounts(id, balance) VALUES (\'{}\', 0);".format(id))
         db.commit()
     return {"id": id, "balance": 0}
 
 
-@app.put("/deposit")
 def deposit_funds(body: UpdateBalance):
     with db.cursor() as cur:
         account = get_account_with_id(cur, body.id)
@@ -72,7 +91,6 @@ def deposit_funds(body: UpdateBalance):
     return account
 
 
-@app.put("/withdraw")
 def withdraw_funds(body: UpdateBalance):
     with db.cursor() as cur:
         account = get_account_with_id(cur, body.id)
@@ -82,11 +100,9 @@ def withdraw_funds(body: UpdateBalance):
     return account
 
 
-@app.put("/transfer")
 def transfer_funds(body: Transfer):
     with db.cursor() as cur:
         account_from = get_account_with_id(cur, body.from_id)
-        account_to = get_account_with_id(cur, body.to_id)
         account_from["balance"] -= body.amount
         account_to = get_account_with_id(cur, body.to_id)
         account_to["balance"] += body.amount
@@ -112,3 +128,51 @@ def acceptor_accept(body: AcceptMessage):
     res = acceptor.handle_accept(body.run_id, body.propose_id, body.val)
     acceptor.serialize()
     return {"accepted": res}
+
+
+@app.post("/open")
+def paxos_open_bank_account():
+    op = BankOperation(op_type=BankOpType.OPEN_ACCOUNT, args=None)
+    return paxos_execute(op)
+
+
+@app.put("/deposit")
+def paxos_deposit_funds(body: UpdateBalance):
+    op = BankOperation(op_type=BankOpType.DEPOSIT, args=body)
+    return paxos_execute(op)
+
+
+@app.put("/withdraw")
+def paxos_withdraw_funds(body: UpdateBalance):
+    op = BankOperation(op_type=BankOpType.WITHDRAW, args=body)
+    return paxos_execute(op)
+
+
+@app.put("/transfer")
+def paxos_transfer_funds(body: Transfer):
+    op = BankOperation(op_type=BankOpType.TRANSFER, args=body)
+    return paxos_execute(op)
+
+
+def paxos(run_id: int, op: BankOperation) -> BankOperation:
+    # TODO
+    pass
+
+
+def execute(op: BankOperation, run_id: int):
+    match op.op_type:
+        case BankOpType.OPEN_ACCOUNT:
+            return open_bank_account(run_id)
+        case BankOpType.DEPOSIT:
+            return deposit_funds(op.args)
+        case BankOpType.WITHDRAW:
+            return withdraw_funds(op.args)
+        case BankOpType.TRANSFER:
+            return transfer_funds(op.args)
+        case _:
+            raise ValueError("Operation type unrecognised!")
+
+
+def paxos_execute(op: BankOperation) -> dict:
+    # TODO
+    return execute(op=op, run_id=0)
