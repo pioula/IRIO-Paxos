@@ -22,7 +22,7 @@ class Acceptor:
             self.accepted_val = None
 
     def handle_prepare(self, propose_id):
-        if self.promised_id <= propose_id:
+        if self.promised_id < propose_id:
             self.promised_id = propose_id
             return self.accepted_id, self.accepted_val
         return None, self.promised_id
