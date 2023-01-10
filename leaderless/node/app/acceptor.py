@@ -4,6 +4,10 @@ from collections import defaultdict
 FILE_NAME = "acceptor.pickle"
 
 
+def create_default_params():
+    return {"promised_id": -1, "accepted_id": None, "accepted_val": None}
+
+
 class Acceptor:
     def __init__(self):
         """
@@ -15,7 +19,7 @@ class Acceptor:
                 self.parameters = on_disk_acceptor.parameters
 
         except FileNotFoundError:
-            self.parameters = defaultdict(lambda: {"promised_id": -1, "accepted_id": None, "accepted_val": None})
+            self.parameters = defaultdict(create_default_params)
 
     def handle_prepare(self, run_id, propose_id):
         run_parameters = self.parameters[run_id]

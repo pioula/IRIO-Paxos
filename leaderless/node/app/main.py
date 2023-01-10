@@ -96,18 +96,18 @@ def transfer_funds(body: Transfer):
     return {"account_from": account_from, "account_to": account_to}
 
 
-@app.put("acceptor_prepare")
+@app.put("/acceptor_prepare")
 def acceptor_prepare(body: PrepareMessage):
     res = acceptor.handle_prepare(body.run_id, body.propose_id)
     acceptor.serialize()
-    if res[0]:
+    if res[0] is not None:
         # Prepare operation succeeded!
         return {"accepted_id": res[0], "accepted_val": res[1]}
     # Prepare operation did not succeed, send NACK response.
     return {"promised_id": res[1]}
 
 
-@app.put("acceptor_accept")
+@app.put("/acceptor_accept")
 def acceptor_accept(body: AcceptMessage):
     res = acceptor.handle_accept(body.run_id, body.propose_id, body.val)
     acceptor.serialize()
