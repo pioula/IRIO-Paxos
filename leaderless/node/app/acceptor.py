@@ -8,9 +8,17 @@ import app.bank as bank
 
 FILE_NAME = "acceptor.pickle"
 
-logging.basicConfig()
-logger = logging.getLogger("ACCEPTOR")
+logger = logging.getLogger('ACCEPTOR')
 logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler('acceptor.log')
+fh.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(levelname)s:    %(name)s:    %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 def create_default_params():
@@ -32,37 +40,31 @@ class Acceptor:
             self.parameters = defaultdict(create_default_params)
             logger.debug('No Acceptor object found on the disk! Creating a new one.')
 
+    def log(self, run_id: int, propose_id: int, state: dict, message: str):
+        logger.debug(f"[RUN: {run_id}] [PROPOSE_ID: {propose_id}] [ACCEPTOR_STATE: {state}]:    {message}")
+
     def handle_prepare(self, run_id, propose_id):
         run_parameters = self.parameters[run_id]
 
         if run_parameters["promised_id"] < propose_id:
-            logger.debug(f'New propose_id ({propose_id}) for paxos run ({run_id}) higher than all promised before in '
-                         f'paxos run ({run_id}).')
+            self.log(run_id, propose_id, run_parameters, f'Promised to ignore propose id <= {propose_id}.')
 
             run_parameters["promised_id"] = propose_id
-            logger.debug(f'Promised to ignore propose_id < {run_parameters["promised_id"]}')
             return run_parameters["accepted_id"], run_parameters["accepted_val"]
 
-        logger.debug(
-            f'Already promised to ignore propose_id: ({propose_id}) <= promised_id: ({run_parameters["promised_id"]}) '
-            f'in paxos run ({run_id}).')
+        self.log(run_id, propose_id, run_parameters, f'Ignoring request.')
         return None, run_parameters["promised_id"]
 
     def handle_accept(self, run_id, propose_id, val):
         run_parameters = self.parameters[run_id]
 
         if run_parameters["promised_id"] <= propose_id:
-            logger.debug(f'New propose_id ({propose_id}) >= max promised_id ({run_parameters["promised_id"]}) for '
-                         f'paxos run ({run_id}).')
-
             run_parameters["accepted_id"] = propose_id
             run_parameters["accepted_val"] = val
-            logger.debug(f'Accepted value {val} with propose id {propose_id} for paxos run {run_id}.')
+            self.log(run_id, propose_id, run_parameters, f'Accepted value {val}.')
             return True
 
-        logger.debug(
-            f'Already promised to ignore promised_id: ({run_parameters["promised_id"]}) '
-            f'< max_promised_id: ({run_parameters["promised_id"]}) in paxos run ({run_id}).')
+        self.log(run_id, propose_id, run_parameters, f'Ignoring request.')
         return False
 
     def serialize(self):
@@ -104,7 +106,7 @@ instance = Acceptor()
 
 @router.put("/acceptor_prepare")
 def acceptor_prepare(body: PrepareMessage):
-    logger.debug(f"Received message {body}")
+    logger.debug(f"Received {body}")
     res = instance.handle_prepare(body.run_id, body.propose_id)
     instance.serialize()
     if res[0] is not None:
@@ -116,7 +118,7 @@ def acceptor_prepare(body: PrepareMessage):
 
 @router.put("/acceptor_accept")
 def acceptor_accept(body: AcceptMessage):
-    logger.debug(f"Received message {body}")
+    logger.debug(f"Received {body}")
     res = instance.handle_accept(body.run_id, body.propose_id, body.val)
     instance.serialize()
     return {"accepted": res}
