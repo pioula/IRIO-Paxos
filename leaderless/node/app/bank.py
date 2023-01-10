@@ -87,6 +87,31 @@ def transfer_funds(to_id: str, from_id: str, amount: int):
     return {"account_from": account_from, "account_to": account_to}
 
 
+def validate_deposit_funds(id: str, amount: int):
+    with db.cursor() as cur:
+        get_account_with_id(cur, id)
+        db.commit()
+
+
+def validate_withdraw_funds(id: str, amount: int):
+    with db.cursor() as cur:
+        account = get_account_with_id(cur, id)
+        if account["balance"] < amount:
+            db.rollback()
+            raise HTTPException(status_code=403, detail="Insufficient funds.")
+        db.commit()
+
+
+def validate_transfer_funds(to_id: str, from_id: str, amount: int):
+    with db.cursor() as cur:
+        account_from = get_account_with_id(cur, from_id)
+        if account_from["balance"] < amount:
+            db.rollback()
+            raise HTTPException(status_code=403, detail="Insufficient funds.")
+        get_account_with_id(cur, to_id)
+        db.commit()
+
+
 def execute(op: BankOperation, op_seq_num: id) -> dict:
     match op.op_type:
         case BankOpType.OPEN_ACCOUNT:
@@ -100,3 +125,16 @@ def execute(op: BankOperation, op_seq_num: id) -> dict:
         case _:
             raise ValueError("Operation type unrecognised!")
 
+
+def validate_without_executing(op: BankOperation):
+    match op.op_type:
+        case BankOpType.OPEN_ACCOUNT:
+            return
+        case BankOpType.DEPOSIT:
+            return validate_deposit_funds(**op.args)
+        case BankOpType.WITHDRAW:
+            return validate_withdraw_funds(**op.args)
+        case BankOpType.TRANSFER:
+            return validate_transfer_funds(**op.args)
+        case _:
+            raise ValueError("Operation type unrecognised!")

@@ -127,8 +127,8 @@ class Proposer:
                 retries += 1
                 continue
             elif res["accepted_val"] is None:
-                logger.debug(f"Available nodes have not accepted any value for paxos run {self.run_id} yet.")
-                # TODO validate op here
+                logger.debug(f"Majority of nodes have not accepted any value for paxos run {self.run_id} yet.")
+                bank.validate_without_executing(op)
                 pass
             else:
                 logger.debug(f"Value accepted in paxos run {self.run_id} with highest accept_id: {res}. ")
