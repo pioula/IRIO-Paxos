@@ -11,9 +11,18 @@ import app.acceptor as acceptor
 
 FILE_NAME = "proposer.pickle"
 
-logging.basicConfig()
-logger = logging.getLogger("PROPOSER")
+logger = logging.getLogger('PROPOSER')
 logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler('proposer.log')
+fh.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(levelname)s:    %(name)s:    %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
+
 
 NODES = 5
 NODE_ID = int(os.environ["NODE_ID"])
@@ -30,7 +39,7 @@ class NotEnoughNodesAvailable(Exception):
 
 
 def backoff(retries: int):
-    backoff = random.randint(0, 2**retries - 1)
+    backoff = random.randint(0, 2**retries)
     logger.debug(f"Retrying after {backoff} seconds.")
     sleep(backoff)
 
@@ -55,11 +64,14 @@ class Proposer:
         with open(FILE_NAME, "wb") as outfile:
             pickle.dump(self, outfile)
 
+    def log(self, propose_id: int, message: str):
+        logger.debug(f"[RUN: {self.run_id}] [PROPOSE_ID: {propose_id}]:    {message}")
+
     def broadcast_prepare(self, propose_id: int) -> dict:
         mess = acceptor.PrepareMessage(run_id=self.run_id, propose_id=propose_id)
         responses = []
 
-        logger.debug(f"Broadcasting PREPARE: {mess}")
+        self.log(propose_id, f"Broadcasting: {mess}")
 
         for id in range(1, NODES + 1):
             if id == NODE_ID:
@@ -69,11 +81,11 @@ class Proposer:
                     r = requests.put(f"http://node{id}:80/acceptor_prepare", json=mess.dict())
                     r = r.json()
                 except Exception as error:
-                    logger.debug(f"Sending PREPARE to node {id} failed. Reason: {error}")
+                    self.log(propose_id, f"Sending PREPARE to node {id} failed. Reason: {error}")
                     continue
             responses.append(r)
 
-        logger.debug(f"Received PROMISEs: {responses}")
+        self.log(propose_id, f"Received PROMISEs: {responses}")
 
         max_accepted_id = -1
         max_promised_id = -1
@@ -87,7 +99,7 @@ class Proposer:
                 res = r
 
         if len(responses) <= NODES // 2:
-            logger.debug(f"Majority of nodes did not respond to prepare message. Responses count: {len(responses)}")
+            self.log(propose_id, f"Majority of nodes did not respond to prepare message. Responses count: {len(responses)}")
             raise HTTPException(status_code=503, detail="Service unavailable.")
         return res
 
@@ -95,7 +107,7 @@ class Proposer:
         mess: acceptor.AcceptMessage = acceptor.AcceptMessage(run_id=self.run_id, propose_id=propose_id, val=val)
         accepts_cnt = 0
 
-        logger.debug(f"Broadcasting ACCEPT: {mess}")
+        self.log(propose_id, f"Broadcasting {mess}")
 
         for id in range(1, NODES + 1):
             if id == NODE_ID:
@@ -105,41 +117,41 @@ class Proposer:
                     r = requests.put(f"http://node{id}:80/acceptor_accept", json=mess.dict())
                     r = r.json()
                 except Exception as error:
-                    logger.debug(f"Sending ACCEPT to node {id} failed: {error}")
+                    self.log(propose_id, f"Sending ACCEPT to node {id} failed: {error}")
                     continue
             if r["accepted"]:
                 accepts_cnt += 1
 
-        logger.debug(f"{accepts_cnt} nodes accepted value {val} in paxos run {self.run_id}.")
+        self.log(propose_id, f"{accepts_cnt} nodes accepted value {val}.")
 
         return accepts_cnt > NODES // 2
 
     def paxos(self, op: bank.BankOperation) -> bank.BankOperation:
-        logger.debug(f"Proposing operation {op} in paxos run {self.run_id}")
         propose_id = NODE_ID
         retries = 0
         while True:
+            self.log(propose_id, f"Proposing {op}")
             res = self.broadcast_prepare(propose_id=propose_id)
             if "promised_id" in res:
-                logger.debug(f"Received NACK response {res}.")
+                self.log(propose_id, f"Received NACK response {res}.")
                 propose_id = next_unique(res["promised_id"])
                 backoff(retries)
                 retries += 1
                 continue
             elif res["accepted_val"] is None:
-                logger.debug(f"Majority of nodes have not accepted any value for paxos run {self.run_id} yet.")
+                self.log(propose_id, f"Majority of nodes have NOT accepted any value yet.")
                 bank.validate_without_executing(op)
                 pass
             else:
-                logger.debug(f"Value accepted in paxos run {self.run_id} with highest accept_id: {res}. ")
+                self.log(propose_id, f"Majority of nodes accepted value: {res}. ")
                 op = bank.BankOperation(**res["accepted_val"])
 
             accepted = self.broadcast_accept(propose_id=propose_id, val=op)
             if accepted:
-                logger.debug(f"Operation {op} was accepted by majority of nodes in paxos run {self.run_id}.")
+                self.log(propose_id, f"Operation {op} was accepted by majority of nodes.")
                 return op
             else:
-                logger.debug(f"Operation {op} was NOT accepted by majority of nodes in paxos run {self.run_id}.")
+                self.log(propose_id, f"Operation {op} was NOT accepted by majority of nodes.")
                 propose_id += NODES
                 backoff(retries)
                 retries += 1
