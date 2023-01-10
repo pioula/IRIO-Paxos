@@ -28,7 +28,7 @@ class Acceptor:
     def handle_accept(self, run_id, propose_id, val):
         run_parameters = self.parameters[run_id]
 
-        if run_parameters["promised_id"] <= propose_id:
+        if run_parameters["promised_id"] < propose_id:
             run_parameters["accepted_id"] = propose_id
             run_parameters["accepted_val"] = val
             return True
