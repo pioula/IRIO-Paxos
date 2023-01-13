@@ -55,7 +55,7 @@ class Proposer:
         try:
             with open(FILE_NAME, "rb") as infile:
                 on_disk_proposer = pickle.load(infile)
-                self.run_id = on_disk_proposer
+                self.run_id = on_disk_proposer.run_id
 
         except FileNotFoundError:
             self.run_id = 0
