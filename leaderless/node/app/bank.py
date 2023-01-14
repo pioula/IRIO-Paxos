@@ -3,7 +3,7 @@ from enum import IntEnum
 from fastapi import HTTPException
 from pydantic import BaseModel
 
-from app.database import *
+from database import *
 
 NODE_ID = os.environ["NODE_ID"]
 db = connect()

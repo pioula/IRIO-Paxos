@@ -2,15 +2,19 @@ from anyio import CapacityLimiter
 from anyio.lowlevel import RunVar
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+import uvicorn
 
-import app.bank as bank
-from app.proposer import Proposer
-import app.acceptor as acceptor
+import bank as bank
+from proposer import Proposer
+import acceptor as acceptor
+
 
 app = FastAPI()
 app.include_router(acceptor.router)
 proposer = Proposer()
 
+config = uvicorn.Config(app, host="0.0.0.0", port=80, log_level="info")
+server = uvicorn.Server(config=config)
 
 class UpdateBalance(BaseModel):
     id: str
@@ -56,6 +60,17 @@ def transfer_funds(body: Transfer):
     op = bank.BankOperation(op_type=bank.BankOpType.TRANSFER, args=body.dict())
     return proposer.execute(op)
 
+@app.get("/quit")
+async def quit_app():
+    global server
+    server.should_exit = True
+    server.force_exit = True
+    await server.shutdown()
+    return {}
 
-
-
+def main():
+    global server
+    server.run()
+    
+if __name__ == "__main__":
+    main()

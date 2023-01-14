@@ -4,7 +4,7 @@ from collections import defaultdict
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-import app.bank as bank
+import bank as bank
 
 FILE_NAME = "acceptor.pickle"
 
