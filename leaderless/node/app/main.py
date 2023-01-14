@@ -61,16 +61,16 @@ def transfer_funds(body: Transfer):
     return proposer.execute(op)
 
 @app.get("/quit")
-async def quit_app():
+def quit_app():
     global server
     server.should_exit = True
     server.force_exit = True
-    await server.shutdown()
+    server.shutdown()
     return {}
 
 def main():
     global server
     server.run()
-    
+
 if __name__ == "__main__":
     main()
