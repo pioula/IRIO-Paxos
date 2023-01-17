@@ -86,7 +86,7 @@ def random_request():
                 return exec_quit(port)
         return
     except Exception:
-        pass
+        print("Request failed.")
 
 def get_state(node_port):
     node_state = {}
@@ -99,7 +99,7 @@ def get_state(node_port):
 
 
 os.system("docker compose down >/dev/null 2>&1")
-os.system("docker compose up >/dev/null 2>&1 &")
+os.system("docker compose up --build &")
 
 wait_for_nodes_to_wake_up()
 

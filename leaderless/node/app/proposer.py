@@ -67,7 +67,7 @@ class Proposer:
     def log(self, propose_id: int, message: str):
         logger.debug(f"[RUN: {self.run_id}] [PROPOSE_ID: {propose_id}]:    {message}")
 
-    def broadcast_prepare(self, propose_id: int) -> dict:
+    def broadcast_prepare(self, propose_id: int):
         mess = acceptor.PrepareMessage(run_id=self.run_id, propose_id=propose_id)
         responses = []
 
@@ -100,7 +100,7 @@ class Proposer:
 
         if len(responses) <= NODES // 2:
             self.log(propose_id, f"Majority of nodes did not respond to prepare message. Responses count: {len(responses)}")
-            raise HTTPException(status_code=503, detail="Service unavailable.")
+            return None
         return res
 
     def broadcast_accept(self, propose_id: int, val: bank.BankOperation) -> bool:
@@ -132,6 +132,11 @@ class Proposer:
         while True:
             self.log(propose_id, f"Proposing {op}")
             res = self.broadcast_prepare(propose_id=propose_id)
+            if res is None:
+                propose_id = next_unique(propose_id + 1)
+                backoff(retries)
+                retries += 1
+                continue
             if "promised_id" in res:
                 self.log(propose_id, f"Received NACK response {res}.")
                 propose_id = next_unique(res["promised_id"])
