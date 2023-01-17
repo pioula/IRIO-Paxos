@@ -8,7 +8,7 @@ random.seed(10)
 
 accounts = {}
 
-PATHS = ['open', 'deposit', 'withdraw', 'transfer', 'quit']
+PATHS = ['deposit', 'withdraw', 'quit', 'transfer', 'open']
 NODE_PORTS = range(8001, 8006)
 LOCALHOST = 'http://localhost'
 
@@ -93,8 +93,10 @@ def get_state(node_port):
     for id in accounts.keys():
         print(f"Reading balance of account {id}.")
         r = requests.put(f'{LOCALHOST}:{node_port}/deposit', json={"id": id, "amount": 0})
+        print(r)
         if r.status_code == 200:
             node_state[id] = r.json()["balance"]
+        print(node_state)
     return node_state
 
 
@@ -103,28 +105,33 @@ os.system("docker compose up --build &")
 
 wait_for_nodes_to_wake_up()
 
-r = requests.post(f'{LOCALHOST}:8001/open')
-r = requests.post(f'{LOCALHOST}:8001/open')
-accounts['0'] = 0
-accounts['1'] = 0
+r = requests.post(f'{LOCALHOST}:8001/open').json()
+accounts[r['id']] = r['balance']
+r = requests.post(f'{LOCALHOST}:8001/open').json()
+accounts[r['id']] = r['balance']
 
 print("Sending random requests..")
-for i in range(1000):
+for i in range(2000):
     random_request()
 
+sleep(2)
 print("Waiting for all nodes to wake up..")
 wait_for_nodes_to_wake_up()
 print("Reading node states..")
 
+
+
 states = {}
 for port in NODE_PORTS:
     print(f"Reading state of node {port % 10}")
-    states[port] = get_state(port)
+    s = get_state(port)
+    states[port] = s
+    print(states[port])
 
 print(f"Expected node state: {accounts}")
 
-for node_port in states.keys():
+for node_port in NODE_PORTS:
     print(f"Actual node {node_port % 10} state: {states[node_port]}")
 
-for node_port in states.keys():
+for node_port in NODE_PORTS:
     assert states[node_port] == accounts

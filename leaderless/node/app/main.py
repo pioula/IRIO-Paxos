@@ -64,7 +64,7 @@ def transfer_funds(body: Transfer):
 def quit_app():
     global server
     server.should_exit = True
-    server.force_exit = True
+    server.force_exit = False
     server.shutdown()
     return {}
 
