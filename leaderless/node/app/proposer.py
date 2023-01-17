@@ -39,7 +39,7 @@ class NotEnoughNodesAvailable(Exception):
 
 
 def backoff(retries: int):
-    backoff = random.randint(0, 2**retries)
+    backoff = random.randint(0, 2**retries - 1)
     logger.debug(f"Retrying after {backoff} seconds.")
     sleep(backoff)
 
