@@ -72,6 +72,16 @@ services:
     restart: unless-stopped
     volumes:
       - logs:/code/log
+  # dummy
+  dummy:
+    environment:
+      NODE_ID: '6'
+    build: ./dummy
+    ports:
+      - 8006:80
+    depends_on:
+      - init-remove-logs
+    restart: unless-stopped
   # visualization
   loki:
     image: grafana/loki:2.6.1

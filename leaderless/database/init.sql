@@ -9,6 +9,7 @@ GRANT ALL PRIVILEGES ON DATABASE bank2 TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE bank3 TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE bank4 TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE bank5 TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE bank6 TO postgres;
 
 \c bank1
 CREATE TABLE accounts (
@@ -31,6 +32,11 @@ CREATE TABLE accounts (
   balance INTEGER NOT NULL
 );
 \c bank5
+CREATE TABLE accounts (
+  id VARCHAR (50) PRIMARY KEY,
+  balance INTEGER NOT NULL
+);
+\c bank6
 CREATE TABLE accounts (
   id VARCHAR (50) PRIMARY KEY,
   balance INTEGER NOT NULL
