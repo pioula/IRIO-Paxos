@@ -9,6 +9,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  init-remove-logs:
+    image: busybox:latest
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - logs:/home
+    command: ["/bin/sh", "-c", "rm /home/acceptor*.log && rm /home/proposer*.log"]
   node1:
     environment:
       NODE_ID: '1'
@@ -16,9 +24,10 @@ services:
     ports:
       - 8001:80
     depends_on:
-      database:
-        condition: service_healthy
+      - init-remove-logs
     restart: unless-stopped
+    volumes:
+      - logs:/code/log
   node2:
     environment:
       NODE_ID: '2'
@@ -26,9 +35,10 @@ services:
     ports:
       - 8002:80
     depends_on:
-      database:
-        condition: service_healthy
+      - init-remove-logs
     restart: unless-stopped
+    volumes:
+      - logs:/code/log
   node3:
     environment:
       NODE_ID: '3'
@@ -36,9 +46,10 @@ services:
     ports:
       - 8003:80
     depends_on:
-      database:
-        condition: service_healthy
+      - init-remove-logs
     restart: unless-stopped
+    volumes:
+      - logs:/code/log
   node4:
     environment:
       NODE_ID: '4'
@@ -46,9 +57,10 @@ services:
     ports:
       - 8004:80
     depends_on:
-      database:
-        condition: service_healthy
+      - init-remove-logs
     restart: unless-stopped
+    volumes:
+      - logs:/code/log
   node5:
     environment:
       NODE_ID: '5'
@@ -56,6 +68,10 @@ services:
     ports:
       - 8005:80
     depends_on:
-      database:
-        condition: service_healthy
+      - init-remove-logs
     restart: unless-stopped
+    volumes:
+      - logs:/code/log
+  
+volumes:
+  logs:

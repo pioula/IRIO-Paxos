@@ -3,6 +3,7 @@ import logging
 from collections import defaultdict
 from fastapi import APIRouter
 from pydantic import BaseModel
+import os
 
 import bank as bank
 
@@ -10,7 +11,7 @@ FILE_NAME = "acceptor.pickle"
 
 logger = logging.getLogger('ACCEPTOR')
 logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('acceptor.log')
+fh = logging.FileHandler(f'log/acceptor{int(os.environ["NODE_ID"])}.log')
 fh.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)

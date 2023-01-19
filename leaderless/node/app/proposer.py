@@ -13,7 +13,7 @@ FILE_NAME = "proposer.pickle"
 
 logger = logging.getLogger('PROPOSER')
 logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('proposer.log')
+fh = logging.FileHandler(f'log/proposer{int(os.environ["NODE_ID"])}.log')
 fh.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
