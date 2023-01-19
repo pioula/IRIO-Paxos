@@ -9,7 +9,7 @@ import bank as bank
 
 FILE_NAME = "acceptor.pickle"
 
-logger = logging.getLogger('ACCEPTOR')
+logger = logging.getLogger(f'ACCEPTOR_{int(os.environ["NODE_ID"])}')
 logger.setLevel(logging.DEBUG)
 fh = logging.FileHandler(f'log/acceptor{int(os.environ["NODE_ID"])}.log')
 fh.setLevel(logging.DEBUG)

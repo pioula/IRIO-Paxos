@@ -11,7 +11,7 @@ import acceptor as acceptor
 
 FILE_NAME = "proposer.pickle"
 
-logger = logging.getLogger('PROPOSER')
+logger = logging.getLogger(f'PROPOSER_{int(os.environ["NODE_ID"])}')
 logger.setLevel(logging.DEBUG)
 fh = logging.FileHandler(f'log/proposer{int(os.environ["NODE_ID"])}.log')
 fh.setLevel(logging.DEBUG)
