@@ -18,6 +18,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
+    restart: unless-stopped
   node2:
     environment:
       NODE_ID: '2'
@@ -27,6 +28,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
+    restart: unless-stopped
   node3:
     environment:
       NODE_ID: '3'
@@ -36,6 +38,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
+    restart: unless-stopped
   node4:
     environment:
       NODE_ID: '4'
@@ -45,6 +48,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
+    restart: unless-stopped
   node5:
     environment:
       NODE_ID: '5'
@@ -54,3 +58,4 @@ services:
     depends_on:
       database:
         condition: service_healthy
+    restart: unless-stopped

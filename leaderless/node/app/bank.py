@@ -3,11 +3,11 @@ from enum import IntEnum
 from fastapi import HTTPException
 from pydantic import BaseModel
 
-from app.database import *
+from database import *
 
 NODE_ID = os.environ["NODE_ID"]
 db = connect()
-
+db.autocommit = False
 
 class BankOpType(IntEnum):
     OPEN_ACCOUNT = 1
@@ -90,7 +90,7 @@ def transfer_funds(to_id: str, from_id: str, amount: int):
 def validate_deposit_funds(id: str, amount: int):
     with db.cursor() as cur:
         get_account_with_id(cur, id)
-        db.commit()
+        db.rollback()
 
 
 def validate_withdraw_funds(id: str, amount: int):
@@ -99,7 +99,7 @@ def validate_withdraw_funds(id: str, amount: int):
         if account["balance"] < amount:
             db.rollback()
             raise HTTPException(status_code=403, detail="Insufficient funds.")
-        db.commit()
+        db.rollback()
 
 
 def validate_transfer_funds(to_id: str, from_id: str, amount: int):
@@ -109,7 +109,7 @@ def validate_transfer_funds(to_id: str, from_id: str, amount: int):
             db.rollback()
             raise HTTPException(status_code=403, detail="Insufficient funds.")
         get_account_with_id(cur, to_id)
-        db.commit()
+        db.rollback()
 
 
 def execute(op: BankOperation, op_seq_num: id) -> dict:

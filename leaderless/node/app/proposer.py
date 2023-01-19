@@ -6,8 +6,8 @@ from time import sleep
 from fastapi import HTTPException
 import requests
 
-import app.bank as bank
-import app.acceptor as acceptor
+import bank as bank
+import acceptor as acceptor
 
 FILE_NAME = "proposer.pickle"
 
@@ -39,7 +39,7 @@ class NotEnoughNodesAvailable(Exception):
 
 
 def backoff(retries: int):
-    backoff = random.randint(0, 2**retries)
+    backoff = random.randint(0, 2**retries - 1)
     logger.debug(f"Retrying after {backoff} seconds.")
     sleep(backoff)
 
