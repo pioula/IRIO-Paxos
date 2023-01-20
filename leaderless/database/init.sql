@@ -3,6 +3,8 @@ CREATE DATABASE bank2;
 CREATE DATABASE bank3;
 CREATE DATABASE bank4;
 CREATE DATABASE bank5;
+CREATE DATABASE bank6;
+CREATE DATABASE tester;
 
 GRANT ALL PRIVILEGES ON DATABASE bank1 TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE bank2 TO postgres;
@@ -10,6 +12,7 @@ GRANT ALL PRIVILEGES ON DATABASE bank3 TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE bank4 TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE bank5 TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE bank6 TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE tester TO postgres;
 
 \c bank1
 CREATE TABLE accounts (
@@ -41,4 +44,13 @@ CREATE TABLE accounts (
   id VARCHAR (50) PRIMARY KEY,
   balance INTEGER NOT NULL
 );
-
+\c tester
+CREATE TABLE requests (
+  pk SERIAL PRIMARY KEY,
+  request_id INTEGER NOT NULL,
+  node_id INTEGER NOT NULL,
+  request_type VARCHAR (50),
+  delay_sec REAL,
+  status_code INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT current_timestamp
+);
